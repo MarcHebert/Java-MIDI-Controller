@@ -2,9 +2,11 @@ import javax.sound.midi.*;
 
 import java.util.*;
 import java.io.*;
+import java.awt.event.*;
 
-public class main {
+public class main{
 	 
+	private static final char STOPKEY_ = '\r';
 	public static void main(String[] args) throws InvalidMidiDataException 
 	{
 		//STDIN
@@ -54,7 +56,7 @@ public class main {
 		try {
 			inputDevice.open();
 		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Cannot open selected input device");
 			e.printStackTrace();
 		}
 		
@@ -62,7 +64,7 @@ public class main {
 		try {
 			sequencer.open();
 		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Cannot open sequencer");
 			e.printStackTrace();
 		}
 		
@@ -70,7 +72,7 @@ public class main {
 		try {
 			transmitter = inputDevice.getTransmitter();
 		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Cannot acquire input device transmitter");
 			e.printStackTrace();
 		}
 		
@@ -78,11 +80,11 @@ public class main {
 		try {
 			receiver = sequencer.getReceiver();
 		} catch (MidiUnavailableException e) {
-			// TODO Auto-generated catch block
+			System.out.println("Cannot acquire sequencer reciever");
 			e.printStackTrace();
 		}
 		
-		// Bind the transmitter to the receiver so the receiver gets input from the transmitter
+		// Bind transmitter to receiver so receiver gets input from transmitter
 		transmitter.setReceiver(receiver);
 		
 		
@@ -97,7 +99,44 @@ public class main {
 		sequencer.recordEnable(currentTrack, -1);
 		// And start recording
 		sequencer.startRecording();
+		System.out.println("Recording..\n Press enter to stop");
 		
+		//record until enter is pressed
+		//while(in.nextLine()!=);
+		try {
+			System.in.read();
+		} catch (IOException e1) {
+			System.out.println("I/O issues");
+			e1.printStackTrace();
+		}
+		System.out.println("Recording stopped");
+		//on key press stop recording
+		if(sequencer.isRecording())
+		{
+		    // Tell sequencer to stop recording
+		    sequencer.stopRecording();
+
+		    // Retrieve the sequence containing the stuff you played on the MIDI instrument
+		    Sequence tmp = sequencer.getSequence();
+		    
+		    System.out.println("Playing back recorded notes");
+		    
+		    //playback from start of sequence
+		    sequencer.setSequence(tmp);
+		    sequencer.start();
+		    
+		    // Save to file
+		    try {
+				MidiSystem.write(tmp, 0, new File("MyMidiFile.mid"));
+			} catch (IOException e) {
+				System.out.println("Unable to write to midi file");
+				e.printStackTrace();
+			}
+		}
+		
+		
+		inputDevice.close();
+		sequencer.close();
 		
 	}
 
